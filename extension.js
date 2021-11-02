@@ -2,6 +2,9 @@
 const vscode = require('vscode');
 const rs = require('text-readability');
 
+
+let statusBarItem;
+
 function activate(context) {
 
 	const scoreDocumentCommandId = 'complexity-test.scoreDocument';
@@ -9,9 +12,7 @@ function activate(context) {
 
 		const editor = vscode.window.activeTextEditor;
 		if (editor) {
-			const document = editor.document;
-            const documentText = document.getText();
-			const score = rs.fleschKincaidGrade(documentText);
+			const score = getDocumentScore();
 			vscode.window.showInformationMessage(`Flesch-Kincaid Readability Score: ${score}`);
         }
 		else {
@@ -27,7 +28,7 @@ function activate(context) {
 			const selection = editor.selection;
 			const document = editor.document;
             const text = document.getText(selection);
-			const score = rs.fleschKincaidGrade(text);
+			const score = getSelectionScore();
 			vscode.window.showInformationMessage(`Flesch-Kincaid Readability Score for Selected Text: ${score}`);
         }
 		else {
@@ -35,6 +36,66 @@ function activate(context) {
 		}
 	}));
 
+
+
+	// create a new status bar item that we can now manage
+	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	// statusBarItem.command = myCommandId;
+	context.subscriptions.push(statusBarItem);
+
+	// register some listener that make sure the status bar 
+	// item always up-to-date
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateStatusBarItem));
+	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateStatusBarItem));
+
+	// update status bar item once at start
+	updateStatusBarItem();
+}
+
+function getSelectionScore(){
+	const editor = vscode.window.activeTextEditor;
+	if (editor) {
+		const selection = editor.selection;
+		const document = editor.document;
+		const text = document.getText(selection);
+		return rs.fleschKincaidGrade(text);
+	}
+}
+
+function getDocumentScore(){
+	const editor = vscode.window.activeTextEditor;
+	if (editor) {
+		const document = editor.document;
+		const documentText = document.getText();
+		return rs.fleschKincaidGrade(documentText);
+	}
+}
+
+
+
+function updateStatusBarItem() {
+
+	const documentScore = getDocumentScore();
+	const numLinesSelected = getNumberOfSelectedLines();
+
+	if (documentScore && numLinesSelected > 0) {
+		const selectionScore =  getSelectionScore();
+		statusBarItem.text = `$(book) Readability: ${selectionScore} (doc: ${documentScore})`;
+		statusBarItem.show();
+	} else if (documentScore) {
+		statusBarItem.text = `$(book) Readability: ${documentScore}  ${numLinesSelected}`;
+		statusBarItem.show();
+	} else {
+		statusBarItem.hide();
+	}
+}
+
+function getNumberOfSelectedLines() {
+	let lines = 0;
+	if (vscode.window.activeTextEditor) {
+		lines = vscode.window.activeTextEditor.selections.reduce((prev, curr) => prev + (curr.end.line - curr.start.line), 0);
+	}
+	return lines;
 }
 
 

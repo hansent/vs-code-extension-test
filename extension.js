@@ -37,10 +37,28 @@ function activate(context) {
 	}));
 
 
+	const scoreDetailsCommandId = 'complexity-test.showScoreDetails';
+	context.subscriptions.push(vscode.commands.registerCommand(scoreDetailsCommandId, () => {
+		const editor = vscode.window.activeTextEditor;
+		if (editor) {
+			const document = editor.document;
+			const text = document.getText();
+			
+			vscode.window.showInformationMessage(`Readability: ${rs.textStandard(text)}
+				Syllable Count: ${rs.syllableCount(text, lang='en-US')}
+				Lexicon Count: ${rs.lexiconCount(text, removePunctuation=true)}
+				Sentence Count: ${rs.sentenceCount(text)}
+				Flesch-Kincaid Grade Level: ${rs.fleschKincaidGrade(text)}`, 
+				{ modal: true, detail: "document score"}
+			);
+		}
+	}));
+
+
 
 	// create a new status bar item that we can now manage
 	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-	// statusBarItem.command = myCommandId;
+	statusBarItem.command = scoreDetailsCommandId;
 	context.subscriptions.push(statusBarItem);
 
 	// register some listener that make sure the status bar 
@@ -71,8 +89,6 @@ function getDocumentScore(){
 	}
 }
 
-
-
 function updateStatusBarItem() {
 
 	const documentScore = getDocumentScore();
@@ -83,7 +99,7 @@ function updateStatusBarItem() {
 		statusBarItem.text = `$(book) Readability: ${selectionScore} (doc: ${documentScore})`;
 		statusBarItem.show();
 	} else if (documentScore) {
-		statusBarItem.text = `$(book) Readability: ${documentScore}  ${numLinesSelected}`;
+		statusBarItem.text = `$(book) Readability: ${documentScore}`;
 		statusBarItem.show();
 	} else {
 		statusBarItem.hide();

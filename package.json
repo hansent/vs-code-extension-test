@@ -10,13 +10,17 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:complexity-test.documentReadingScore"
+        "*"
 	],
 	"main": "./extension.js",
 	"contributes": {
 		"commands": [{
-            "command": "complexity-test.documentReadingScore",
+            "command": "complexity-test.scoreDocument",
             "title": "Reading Score: Flesch-Kincaid Score for Document "
+		},
+		{
+            "command": "complexity-test.scoreSelection",
+            "title": "Reading Score: Flesch-Kincaid Score for Selection "
 		}]
 	},
 	"scripts": {

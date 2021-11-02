@@ -2,35 +2,41 @@
 const vscode = require('vscode');
 const rs = require('text-readability');
 
-// this method is called when the extension is activated
-/**
- * @param {vscode.ExtensionContext} context
- */
 function activate(context) {
 
-	console.log('Congratulations, your extension "complexity-test" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('complexity-test.documentReadingScore', function () {
+	const scoreDocumentCommandId = 'complexity-test.scoreDocument';
+	context.subscriptions.push(vscode.commands.registerCommand(scoreDocumentCommandId, function () {
 
 		const editor = vscode.window.activeTextEditor;
 		if (editor) {
-            // Get the document text
-			let document = editor.document;
+			const document = editor.document;
             const documentText = document.getText();
-			const score = rs.fleschKincaidGrade(documentText)
-			vscode.window.showInformationMessage(`Readability Score: ${score}`);
+			const score = rs.fleschKincaidGrade(documentText);
+			vscode.window.showInformationMessage(`Flesch-Kincaid Readability Score: ${score}`);
         }
 		else {
 			vscode.window.showErrorMessage(`You must have an open editor with text to analyze to run this command`);
 		}
 	
-	});
+	}));
 
-	context.subscriptions.push(disposable);
+	const scoreSelectionCommandId = 'complexity-test.scoreSelection';
+	context.subscriptions.push(vscode.commands.registerCommand(scoreSelectionCommandId, () => {
+		const editor = vscode.window.activeTextEditor;
+		if (editor) {
+			const selection = editor.selection;
+			const document = editor.document;
+            const text = document.getText(selection);
+			const score = rs.fleschKincaidGrade(text);
+			vscode.window.showInformationMessage(`Flesch-Kincaid Readability Score for Selected Text: ${score}`);
+        }
+		else {
+			vscode.window.showErrorMessage(`You must have text selected to use this command`);
+		}
+	}));
+
 }
+
 
 // this method is called when the extension is deactivated
 function deactivate() {}
